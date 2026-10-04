@@ -12,6 +12,10 @@
 - `ostrovok_discover(area, limit)` — список отелей ОДНОГО или НЕСКОЛЬКИХ районов без тарифов (`limit` — на каждый район).
 - `ostrovok_nearby(pathOrUrl, limit)` — соседи отеля без тарифов.
 - `ostrovok_preset(action=list|add|remove)` — пресет без редактора.
+- `ostrovok_reviews(hotel+area+path | preset+filter)` — отзывы из РАЗНЫХ источников без ручной работы.
+  Парсит рейтинги Ostrovok (/10) и TopHotels (/5, reviewCount), остальные
+  (TripAdvisor, Yandex.Travel, Otzyv, 1001tur, Level.Travel, Coral, Библио-Глобус) —
+  ссылками + цитатами из выдачи. Поиск через DuckDuckGo HTML с fallback на lite-версию.
 - `ostrovok_search` — legacy-алиас, работает как раньше.
 
 ## CLI без файлов
@@ -42,6 +46,27 @@ python3 ostrovok_search.py --preset-list кемер
 python3 ostrovok_search.py --preset-add turkey/side/mid10216682/side_win_otel_spa_all_inclusive/ --add-name "Art Poseidon Side 4*"
 python3 ostrovok_search.py --preset-remove side_win_otel_spa_all_inclusive
 ```
+
+## Отзывы из разных источников (без ручной работы)
+
+```bash
+# один отель: имя + район словами, path опционален (точный рейтинг Ostrovok)
+python3 reviews_search.py --hotel "Art Poseidon Side" --area сиде \
+  --path turkey/side/mid10216682/side_win_otel_spa_all_inclusive/
+
+# пачка из пресета по фильтру
+python3 reviews_search.py --preset hotels.json --filter кемер --top-reviews 2 --json-out reviews.json
+```
+
+Что возвращает на отель:
+- `Ostrovok: X /10, отзывов N` — парсинг страницы отеля (scale 0-10)
+- `TopHotels: Y /5, отзывов M` — парсинг JSON-LD `aggregateRating` (scale 0-5)
+- `Ссылки` — до `--limit-sources` источников: TripAdvisor, Yandex.Travel, Otzyv.ru,
+  1001tur, Level.Travel, Coral, Библио-Глобус, официалка
+- `О чем чаще пишут` — частотные темы (питание, пляж, номер, персонал, шум, wifi...)
+- `Цитаты из выдачи` — топ сниппеты (`--top-reviews`)
+- Поиск источников: DuckDuckGo HTML + fallback lite (без JS, stdlib only).
+  При рейт-лимите основного endpoint автоматически идет на lite.
 
 ## Параметры тарифов
 

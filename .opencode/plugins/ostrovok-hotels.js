@@ -2,7 +2,7 @@ import { tool } from "@opencode-ai/plugin";
 
 /**
  * Ostrovok hotel search — максимально автономный плагин.
- * Никаких ручных файлов: discover/preset/split/alfa — всё через tools.
+ * Никаких ручных файлов: discover/preset/split/alfa/reviews — всё через tools.
  *
  * Tools:
  *  - ostrovok_smart_search: главный поиск (area|hotel|preset) + split + alfa, без файлов
@@ -10,16 +10,18 @@ import { tool } from "@opencode-ai/plugin";
  *  - ostrovok_discover: список отелей района без тарифов
  *  - ostrovok_nearby: соседи отеля без тарифов
  *  - ostrovok_preset: list/add/remove без редактора
+ *  - ostrovok_reviews: отзывы из разных источников (Ostrovok+TopHotels парсинг, остальные ссылками)
  */
 export default async ({ directory }) => {
-  const runScript = (root, argv) => {
-    const cmd = ["python3", JSON.stringify(`${root}/ostrovok_search.py`), ...argv].join(" ");
+  const runScript = (root, script, argv) => {
+    const cmd = ["python3", JSON.stringify(`${root}/${script}`), ...argv].join(" ");
     const proc = Bun.spawnSync(["sh", "-c", cmd], { cwd: root });
     const out = proc.stdout ? proc.stdout.toString() : "";
     const err = proc.stderr ? proc.stderr.toString() : "";
     const text = (out + (err ? "\nSTDERR:\n" + err : "")).trim();
     return text.slice(0, 15000) || "(пустой вывод скрипта)";
   };
+  const runOstrovok = (root, argv) => runScript(root, "ostrovok_search.py", argv);
   const presetPath = (root, p) => (p ? JSON.stringify(p) : JSON.stringify(`${root}/hotels.json`));
 
   return {
@@ -66,7 +68,7 @@ export default async ({ directory }) => {
           if (args.alfa) parts.push("--alfa");
           if (args.top) parts.push("--top", String(args.top));
           try {
-            return runScript(root, parts);
+            return runOstrovok(root, parts);
           } catch (e) {
             return `Ошибка smart_search: ${e?.message ?? e}`;
           }
@@ -80,7 +82,7 @@ export default async ({ directory }) => {
         async execute(args, context) {
           const root = context?.directory ?? directory;
           try {
-            return runScript(root, ["--resolve", JSON.stringify(args.pathOrUrl)]);
+            return runOstrovok(root, ["--resolve", JSON.stringify(args.pathOrUrl)]);
           } catch (e) {
             return `Ошибка резолва: ${e?.message ?? e}`;
           }
@@ -97,7 +99,7 @@ export default async ({ directory }) => {
         async execute(args, context) {
           const root = context?.directory ?? directory;
           try {
-            return runScript(root, ["--discover", JSON.stringify(args.area), "--limit", String(args.limit ?? 12)]);
+            return runOstrovok(root, ["--discover", JSON.stringify(args.area), "--limit", String(args.limit ?? 12)]);
           } catch (e) {
             return `Ошибка discover: ${e?.message ?? e}`;
           }
@@ -114,7 +116,7 @@ export default async ({ directory }) => {
         async execute(args, context) {
           const root = context?.directory ?? directory;
           try {
-            return runScript(root, ["--nearby", JSON.stringify(args.pathOrUrl), "--limit", String(args.limit ?? 8)]);
+            return runOstrovok(root, ["--nearby", JSON.stringify(args.pathOrUrl), "--limit", String(args.limit ?? 8)]);
           } catch (e) {
             return `Ошибка nearby: ${e?.message ?? e}`;
           }
@@ -138,20 +140,53 @@ export default async ({ directory }) => {
           const pp = args.preset ?? def;
           try {
             if (args.action === "list")
-              return runScript(root, ["--preset-list", JSON.stringify(args.filter ?? ""), "--preset", JSON.stringify(pp)]);
+              return runOstrovok(root, ["--preset-list", JSON.stringify(args.filter ?? ""), "--preset", JSON.stringify(pp)]);
             if (args.action === "add") {
               if (!args.pathOrUrl) return "Для add нужен pathOrUrl";
               const a = ["--preset-add", JSON.stringify(args.pathOrUrl), "--preset", JSON.stringify(pp)];
               if (args.name) a.push("--add-name", JSON.stringify(args.name));
-              return runScript(root, a);
+              return runOstrovok(root, a);
             }
             if (args.action === "remove") {
               if (!args.slug) return "Для remove нужен slug";
-              return runScript(root, ["--preset-remove", JSON.stringify(args.slug), "--preset", JSON.stringify(pp)]);
+              return runOstrovok(root, ["--preset-remove", JSON.stringify(args.slug), "--preset", JSON.stringify(pp)]);
             }
             return "action должен быть list|add|remove";
           } catch (e) {
             return `Ошибка preset: ${e?.message ?? e}`;
+          }
+        },
+      }),
+
+      ostrovok_reviews: tool({
+        description:
+          "Отзывы из РАЗНЫХ источников без ручной работы. Один отель (hotel+area+path) или сразу пачка из пресета (preset+filter). Парсит рейтинги Ostrovok (/10) и TopHotels (/5), остальные (TripAdvisor, Yandex, Otzyv, 1001tur, Level, Coral, Библио-Глобус) отдает ссылками + цитатами из выдачи.",
+        args: {
+          hotel: tool.schema.string().optional(),
+          area: tool.schema.string().optional(),
+          path: tool.schema.string().optional(),
+          preset: tool.schema.string().optional(),
+          filter: tool.schema.string().optional(),
+          limitSources: tool.schema.number().optional(),
+          topReviews: tool.schema.number().optional(),
+        },
+        async execute(args, context) {
+          const root = context?.directory ?? directory;
+          const parts = [];
+          if (args.preset || (!args.hotel && !args.path)) {
+            parts.push("--preset", presetPath(root, args.preset));
+            if (args.filter) parts.push("--filter", JSON.stringify(args.filter));
+          } else {
+            if (args.hotel) parts.push("--hotel", JSON.stringify(args.hotel));
+            if (args.area) parts.push("--area", JSON.stringify(args.area));
+            if (args.path) parts.push("--path", JSON.stringify(args.path));
+          }
+          parts.push("--limit-sources", String(args.limitSources ?? 8));
+          parts.push("--top-reviews", String(args.topReviews ?? 3));
+          try {
+            return runScript(root, "reviews_search.py", parts);
+          } catch (e) {
+            return `Ошибка reviews: ${e?.message ?? e}`;
           }
         },
       }),
@@ -182,7 +217,7 @@ export default async ({ directory }) => {
           if (args.maxTotal) parts.push("--max-total", String(args.maxTotal));
           if (args.adults) parts.push("--adults", String(args.adults));
           try {
-            return runScript(root, parts);
+            return runOstrovok(root, parts);
           } catch (e) {
             return `Ошибка search: ${e?.message ?? e}`;
           }
