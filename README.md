@@ -7,9 +7,9 @@
 ## Tools (opencode, без файлов)
 
 - `ostrovok_smart_search` — ГЛАВНЫЙ. `arrival/departure` + (`area` | `hotel+path` | `preset`) + `meals/maxTotal/adults/limit/split/alfa/top`.
-  `area`: сиде, кемер, анталия, лара, кунду, чолаклы/эвренсеки. `split=true` — при rates=null сам проверит две половины. `alfa=true` — цена с кэшбэком 10%.
+  `area`: одна (`сиде`) или СРАЗУ НЕСКОЛЬКО через запятую (`сиде, кемер, анталия`). `split=true` — при rates=null сам проверит две половины. `alfa=true` — цена с кэшбэком 10%.
 - `ostrovok_resolve_region(pathOrUrl)` — region_id по ссылке/пути отеля.
-- `ostrovok_discover(area, limit)` — список отелей района без тарифов.
+- `ostrovok_discover(area, limit)` — список отелей ОДНОГО или НЕСКОЛЬКИХ районов без тарифов (`limit` — на каждый район).
 - `ostrovok_nearby(pathOrUrl, limit)` — соседи отеля без тарифов.
 - `ostrovok_preset(action=list|add|remove)` — пресет без редактора.
 - `ostrovok_search` — legacy-алиас, работает как раньше.
@@ -27,6 +27,11 @@ python3 ostrovok_search.py --resolve turkey/kemer/mid7354304/ozkaymak_marina_hot
 python3 ostrovok_search.py --arrival 2026-10-05 --departure 2026-10-11 --area сиде --limit 8 \
   --meals half-board,all-inclusive --max-total 110000 --split --alfa
 
+# СРАЗУ НЕСКОЛЬКО ЛОКАЦИЙ (limit — на каждый район, дедуп по mid)
+python3 ostrovok_search.py --discover "сиде, кемер" --limit 5
+python3 ostrovok_search.py --arrival 2026-10-05 --departure 2026-10-11 --area "сиде, кемер" --limit 5 --split --alfa
+python3 ostrovok_search.py --arrival 2026-10-05 --departure 2026-10-11 --area сиде --area кемер --limit 5
+
 # один отель: path достаточно, region сам
 python3 ostrovok_search.py --arrival 2026-10-05 --departure 2026-10-19 \
   --hotel side_win_otel_spa_all_inclusive --path turkey/side/mid10216682/side_win_otel_spa_all_inclusive/
@@ -43,10 +48,10 @@ python3 ostrovok_search.py --preset-remove side_win_otel_spa_all_inclusive
 | Флаг | Что делает |
 |---|---|
 | `--arrival / --departure` | `YYYY-MM-DD`. Ночной прилет 06.10 в 01:00 = заезд с 05.10 |
-| `--area` | Район человеческим языком: сиде/кемер/анталия/лара/кунду/чолаклы. Discover + тарифы в один проход, preset-файл не нужен |
+| `--area` | Одна или СРАЗУ НЕСКОЛЬКО локаций: `--area сиде`, `--area "сиде, кемер"`, `--area сиде --area кемер`. Районы: сиде/кемер/анталия/лара/кунду/чолаклы. Discover + тарифы в один проход, preset-файл не нужен |
 | `--hotel / --path / --region` | Слаг + path после `/hotel/`. Если `--region` нет — авто-резолв по `--path`, эвристика по path как fallback |
 | `--preset` | По умолч. `hotels.json` рядом со скриптом. Можно не указывать вообще |
-| `--limit` | Сколько отелей для `--discover/--nearby/--area` (по умолч. 12) |
+| `--limit` | Сколько отелей на КАЖДЫЙ район для `--discover/--nearby/--area` (по умолч. 12). Напр. `--area "сиде, кемер" --limit 5` = до 10 отелей |
 | `--meals` | `breakfast,half-board,half-board-dinner,half-board-lunch,full-board,soft-all-inclusive,all-inclusive,ultra-all-inclusive,nomeal`. Понимает UI-имена и точки |
 | `--max-total` | Потолок итого в рублях, `0` = без лимита |
 | `--online-only / --no-online-only` | По умолч. вкл — только `now by credit_card/sbp` (Мир/Visa РФ). Выкл — показать и `в отеле` (там TRY, Мир не сработает) |

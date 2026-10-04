@@ -26,7 +26,7 @@ export default async ({ directory }) => {
     tool: {
       ostrovok_smart_search: tool({
         description:
-          "ГЛАВНЫЙ поиск отелей Островка без ручных файлов. Принимает area (сиде/кемер/анталия/лара/кунду/чолаклы) ИЛИ hotel+path ИЛИ preset. Сам резолвит region, умеет split при rates=null и считает кэшбэк Alfa Travel. Используй всегда вместо ручного скрипта.",
+          "ГЛАВНЫЙ поиск отелей Островка без ручных файлов. Area принимает ОДНУ или СРАЗУ НЕСКОЛЬКО локаций через запятую ('сиде, кемер') или повтор флага. Районы: сиде/кемер/анталия/лара/кунду/чолаклы. Сам резолвит region, умеет split при rates=null и считает кэшбэк Alfa Travel.",
         args: {
           arrival: tool.schema.string(),
           departure: tool.schema.string(),
@@ -89,7 +89,7 @@ export default async ({ directory }) => {
 
       ostrovok_discover: tool({
         description:
-          "DISCOVER: список отелей района без проверки тарифов. Area: сиде, кемер, анталия, лара, кунду, чолаклы/эвренсеки. Вернет slug/path/region — дальше можно сразу в smart_search.",
+          "DISCOVER: список отелей ОДНОГО или СРАЗУ НЕСКОЛЬКИХ районов без тарифов. Area: 'сиде' или 'сиде, кемер, анталия'. Вернет slug/path/region — дальше можно сразу в smart_search.",
         args: {
           area: tool.schema.string(),
           limit: tool.schema.number().optional(),

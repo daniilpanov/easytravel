@@ -13,6 +13,9 @@
   python3 ostrovok_search.py --nearby turkey/side/mid10216682/side_win_otel_spa_all_inclusive/ --limit 8
   # умный поиск по району сразу с тарифами (без preset-файла)
   python3 ostrovok_search.py --arrival 2026-10-05 --departure 2026-10-11 --area сиде --limit 8 --meals half-board,all-inclusive --max-total 110000 --split --alfa
+  # СРАЗУ НЕСКОЛЬКО ЛОКАЦИЙ: через запятую или повтором флага (limit — на каждый район)
+  python3 ostrovok_search.py --arrival 2026-10-05 --departure 2026-10-11 --area "сиде, кемер" --limit 5 --split --alfa
+  python3 ostrovok_search.py --discover "сиде, кемер, анталия" --limit 5
   # один отель: path достаточно, region резолвится сам
   python3 ostrovok_search.py --arrival 2026-10-05 --departure 2026-10-19 --hotel side_win_otel_spa_all_inclusive --path turkey/side/mid10216682/side_win_otel_spa_all_inclusive/
   # preset-менеджмент без редактора
@@ -180,6 +183,58 @@ def resolve_area_key(raw: str) -> dict | None:
         if k in key:
             return {"key": k, **AREA_INDEX[k]}
     return None
+
+
+def parse_area_list(values) -> list:
+    """Мультилокации: --area сиде --area кемер ИЛИ --area 'сиде, кемер; анталия'.
+    Принимает str | list[str] | None, возвращает список сырых названий."""
+    if not values:
+        return []
+    if isinstance(values, str):
+        values = [values]
+    out = []
+    for v in values:
+        for part in re.split(r"[,;+|/]+", v or ""):
+            part = part.strip()
+            if part:
+                out.append(part)
+    # убираем дубли, сохраняем порядок
+    return list(dict.fromkeys(out))
+
+
+def discover_areas(areas: list, limit: int = 12, timeout: int = 30) -> dict:
+    """Discover сразу по нескольким районам. limit — на каждый район.
+    Возвращает merged список с дедупом по mid."""
+    if not areas:
+        return {"ok": False, "error": "пустой список районов"}
+    per_area = []
+    merged = {}
+    errors = []
+    for a in areas:
+        try:
+            res = discover_area(a, limit=limit, timeout=timeout)
+        except Exception as e:
+            errors.append(f"{a}: {e}")
+            continue
+        if not res.get("ok"):
+            errors.append(f"{a}: {res.get('error')}")
+            continue
+        per_area.append({"area": res["area"], "count": len(res["hotels"])})
+        for h in res["hotels"]:
+            m = re.search(r"(mid\d+)", h.get("path", ""))
+            mid = m.group(1) if m else h.get("hotel")
+            if mid not in merged:
+                merged[h["hotel"]] = h
+            # один и тот же mid в двух районах (side + чолаклы) — оставляем первый
+    hotels = list(merged.values())
+    ok = bool(hotels)
+    out = {"ok": ok, "areas": per_area, "hotels": hotels,
+           "total": len(hotels), "limit_per_area": limit}
+    if errors:
+        out["errors"] = errors
+    if not ok:
+        out["error"] = f"ничего не найдено: {'; '.join(errors)}" if errors else "ничего не найдено"
+    return out
 
 
 def discover_area(area: str, limit: int = 12, timeout: int = 30) -> dict:
@@ -400,9 +455,10 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Островок без ручных файлов: discover/nearby/preset/split/alfa")
     # действия без дат
     ap.add_argument("--resolve", help="region_id по path/URL отеля")
-    ap.add_argument("--discover", help="район: сиде/кемер/анталия/лара/кунду/чолаклы (список отелей без тарифов)")
+    ap.add_argument("--discover", action="append", default=None,
+                    help="район(ы): сиде/кемер/анталия/лара/кунду/чолаклы. Можно несколько: --discover сиде --discover кемер или --discover 'сиде, кемер' (список без тарифов)")
     ap.add_argument("--nearby", help="соседи отеля по path/URL (без тарифов)")
-    ap.add_argument("--limit", type=int, default=12, help="сколько отелей для discover/nearby/area")
+    ap.add_argument("--limit", type=int, default=12, help="сколько отелей на КАЖДЫЙ район для discover/nearby/area")
     ap.add_argument("--preset-list", nargs="?", const="", default=None, help="показать пресет, опц. фильтр-строка")
     ap.add_argument("--preset-add", help="добавить отель в пресет по path/URL (region сам). Пример: turkey/side/mid.../slug/")
     ap.add_argument("--add-name", default="", help="имя для --preset-add")
@@ -411,7 +467,8 @@ def main() -> int:
     # поиск тарифов
     ap.add_argument("--arrival", help="YYYY-MM-DD")
     ap.add_argument("--departure", help="YYYY-MM-DD")
-    ap.add_argument("--area", help="искать тарифы сразу по району без preset-файла: сиде/кемер/анталия/...")
+    ap.add_argument("--area", action="append", default=None,
+                    help="тарифы сразу по району(ам) без preset-файла. Можно несколько: --area сиде --area кемер или --area 'сиде, кемер'")
     ap.add_argument("--hotel", help="слаг отеля")
     ap.add_argument("--path", help="path после /hotel/ (для авто-region и ссылки)")
     ap.add_argument("--region", type=int, default=None, help="region_id (если нет --path, резолвится сам)")
@@ -438,14 +495,20 @@ def main() -> int:
         return 0
 
     if args.discover:
+        areas = parse_area_list(args.discover)
         try:
-            res = discover_area(args.discover, limit=args.limit)
+            if len(areas) <= 1:
+                res = discover_area(areas[0] if areas else "", limit=args.limit)
+            else:
+                res = discover_areas(areas, limit=args.limit)
         except Exception as e:
             print(f"ОШИБКА DISCOVER: {e}", file=sys.stderr)
             return 1
         print(json.dumps(res, ensure_ascii=False, indent=1))
         if res.get("ok"):
-            print(f"\nНашел {len(res['hotels'])}: для тарифов запусти с --area {args.discover} --arrival YYYY-MM-DD --departure YYYY-MM-DD")
+            n = len(res.get("hotels", []))
+            alabel = res.get("area") or "+".join(a.get("area", "") for a in res.get("areas", []))
+            print(f"\nНашел {n} ({alabel}): для тарифов запусти с --area '{','.join(areas)}' --arrival YYYY-MM-DD --departure YYYY-MM-DD")
         return 0
 
     if args.nearby:
@@ -490,17 +553,28 @@ def main() -> int:
 
     targets = []
     if args.area:
+        areas = parse_area_list(args.area)
         try:
-            res = discover_area(args.area, limit=args.limit)
+            if len(areas) <= 1:
+                res = discover_area(areas[0], limit=args.limit)
+                hotels = res.get("hotels", []) if res.get("ok") else []
+                alabel = res.get("area", areas[0] if areas else "")
+                if not res.get("ok"):
+                    print(json.dumps(res, ensure_ascii=False, indent=1))
+                    return 1
+            else:
+                res = discover_areas(areas, limit=args.limit)
+                if not res.get("ok"):
+                    print(json.dumps(res, ensure_ascii=False, indent=1))
+                    return 1
+                hotels = res["hotels"]
+                alabel = "+".join(a.get("area", "") for a in res.get("areas", [])) or ",".join(areas)
         except Exception as e:
             print(f"ОШИБКА AREA: {e}", file=sys.stderr)
             return 1
-        if not res.get("ok"):
-            print(json.dumps(res, ensure_ascii=False, indent=1))
-            return 1
-        print(f"Area {res['area']}: беру {len(res['hotels'])} отелей в работу (без ручного preset)")
-        for it in res["hotels"]:
-            targets.append({"name": it["name"], "hotel": it["hotel"],
+        print(f"Areas {alabel}: беру {len(hotels)} отелей в работу (без ручного preset, limit {args.limit} на район)")
+        for it in hotels:
+            targets.append({"name": f"{it['name']}", "hotel": it["hotel"],
                             "region_id": it["region_id"], "path": it["path"]})
     elif args.preset and os.path.exists(args.preset):
         items = load_preset(args.preset)
