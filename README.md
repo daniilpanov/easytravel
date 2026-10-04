@@ -1,68 +1,77 @@
-# Ostrovok Hotel Search — поиск номеров с фильтром питания и бюджета
+# Ostrovok Hotel Search — полностью без ручных файлов
 
-Скрипт `ostrovok_search.py` дергает приватный эндпоинт Островка
-`GET /hotel/search/v1/site/hp/search?body={JSON}` и показывает тарифы
-с разбивкой по питанию, цене и онлайн-оплате российской картой.
+Скрипт `ostrovok_search.py` + плагин `.opencode/plugins/ostrovok-hotels.js`.
+Только стандартная библиотека Python 3. Никакого редактирования JSON/кода вручную —
+всё через флаги или через tools.
 
-Проверено на кейсе: Анталия, 05.10.2026–19.10.2026, 2 взрослых, питание
-от HB до AI, бюджет 110 000 ₽ только отель, оплата рублями.
+## Tools (opencode, без файлов)
 
-## Быстрый старт
+- `ostrovok_smart_search` — ГЛАВНЫЙ. `arrival/departure` + (`area` | `hotel+path` | `preset`) + `meals/maxTotal/adults/limit/split/alfa/top`.
+  `area`: сиде, кемер, анталия, лара, кунду, чолаклы/эвренсеки. `split=true` — при rates=null сам проверит две половины. `alfa=true` — цена с кэшбэком 10%.
+- `ostrovok_resolve_region(pathOrUrl)` — region_id по ссылке/пути отеля.
+- `ostrovok_discover(area, limit)` — список отелей района без тарифов.
+- `ostrovok_nearby(pathOrUrl, limit)` — соседи отеля без тарифов.
+- `ostrovok_preset(action=list|add|remove)` — пресет без редактора.
+- `ostrovok_search` — legacy-алиас, работает как раньше.
+
+## CLI без файлов
 
 ```bash
 cd ostrovok-hotel-search
-# один отель
-python3 ostrovok_search.py --arrival 2026-10-05 --departure 2026-10-19 \
-  --hotel dinc_hotel --region 481
+# discover / nearby — без дат и тарифов
+python3 ostrovok_search.py --discover сиде --limit 10
+python3 ostrovok_search.py --nearby turkey/side/mid10216682/side_win_otel_spa_all_inclusive/ --limit 8
+python3 ostrovok_search.py --resolve turkey/kemer/mid7354304/ozkaymak_marina_hotel_3/
 
-# весь пресет Анталии, только хорошее питание и в бюджет
+# умный поиск по району сразу с тарифами (preset не нужен)
+python3 ostrovok_search.py --arrival 2026-10-05 --departure 2026-10-11 --area сиде --limit 8 \
+  --meals half-board,all-inclusive --max-total 110000 --split --alfa
+
+# один отель: path достаточно, region сам
 python3 ostrovok_search.py --arrival 2026-10-05 --departure 2026-10-19 \
-  --preset hotels.json \
-  --meals half-board,full-board,half-board-dinner,all-inclusive,ultra-all-inclusive \
-  --max-total 110000
+  --hotel side_win_otel_spa_all_inclusive --path turkey/side/mid10216682/side_win_otel_spa_all_inclusive/
+
+# пресет без редактора
+python3 ostrovok_search.py --preset-list
+python3 ostrovok_search.py --preset-list кемер
+python3 ostrovok_search.py --preset-add turkey/side/mid10216682/side_win_otel_spa_all_inclusive/ --add-name "Art Poseidon Side 4*"
+python3 ostrovok_search.py --preset-remove side_win_otel_spa_all_inclusive
 ```
 
-Зависимостей нет — только стандартная библиотека Python 3.
-
-## Параметры
+## Параметры тарифов
 
 | Флаг | Что делает |
 |---|---|
-| `--arrival / --departure` | Даты `YYYY-MM-DD`. Ночной прилет 06.10 в 01:00 = заезд с 05.10 |
-| `--hotel / --region` | Слаг отеля из URL + `region_id`. Анталия-город `481`, Кунду `6054866`, Лара `6054878` |
-| `--preset` | JSON со списком отелей (см. `hotels.json`) |
-| `--adults` | Число взрослых, по умолчанию 2 |
-| `--meals` | Фильтр питания. Коды API: `breakfast`, `half-board`, `half-board-dinner`, `half-board-lunch`, `full-board`, `soft-all-inclusive`, `all-inclusive`, `ultra-all-inclusive`, `nomeal`. Понимает и UI-имена (`halfBoard`, `allInclusive`…) и точки (`halfBoard.fullBoard…`) |
-| `--max-total` | Потолок итого в рублях за весь период, `0` = без лимита |
-| `--online-only` | По умолчанию вкл — только тарифы `now by credit_card / sbp` (оплата Мир/Visa РФ сразу в рублях). Тарифы `в отеле` отбрасываются — там Мир не сработает, только TRY |
-| `--json-out file.json` | Сохранить сырой результат для разбора |
+| `--arrival / --departure` | `YYYY-MM-DD`. Ночной прилет 06.10 в 01:00 = заезд с 05.10 |
+| `--area` | Район человеческим языком: сиде/кемер/анталия/лара/кунду/чолаклы. Discover + тарифы в один проход, preset-файл не нужен |
+| `--hotel / --path / --region` | Слаг + path после `/hotel/`. Если `--region` нет — авто-резолв по `--path`, эвристика по path как fallback |
+| `--preset` | По умолч. `hotels.json` рядом со скриптом. Можно не указывать вообще |
+| `--limit` | Сколько отелей для `--discover/--nearby/--area` (по умолч. 12) |
+| `--meals` | `breakfast,half-board,half-board-dinner,half-board-lunch,full-board,soft-all-inclusive,all-inclusive,ultra-all-inclusive,nomeal`. Понимает UI-имена и точки |
+| `--max-total` | Потолок итого в рублях, `0` = без лимита |
+| `--online-only / --no-online-only` | По умолч. вкл — только `now by credit_card/sbp` (Мир/Visa РФ). Выкл — показать и `в отеле` (там TRY, Мир не сработает) |
+| `--split` | При `rates=null` авто-проверить `arrival/mid` + `mid/departure` и показать лучшее |
+| `--alfa` | Кэшбэк Alfa Travel 10% + ссылка `https://travel.alfabank.ru/` (провайдер Ostrovok) |
+| `--top` | Сколько лучших тарифов на отель (по умолч. 3) |
+| `--json-out` | Сохранить сырой результат |
+
+## Районы и region_id
+
+Анталия-город `481`, Кунду `6054866`, Лара `6054878` (listing `turkey/antalya/`),
+Кемер `8281`, Сиде `4931`, Сиде/Кумкой исключение `4218` (Art Poseidon).
+Резолв: первое `regionId` с повтором ×3 в HTML страницы отеля.
 
 ## Как читать вывод
 
-- `rates=null` — нет сквозной доступности на весь период. Частая причина при заезде завтра: первая неделя распродана. Проверь разбивку `05–12 / 12–19` или другой ресурс (Level.Travel, Trip.com — у них свои квоты).
-- `Нет тарифов под фильтр. Найденные meal: [...]` — номера есть, но только с другим питанием (например у Lara Dinc на 14 ночей только `breakfast`).
-- `Самый дешевый вообще` — ориентир даже если под фильтр ничего нет.
-- `Ссылка` — готовая ссылка на Островок с датами, гостями и `meal_types` для ручной проверки и оплаты.
-
-Пример результата, который влезает в бюджет:
-
-```
-== Esperanza Boutique 3*, Лара — всего тарифов: 12, под фильтр: 1 ==
-   half-board 104864 RUB (~7490/ночь) | Двухместный номер Standard ...
-   Ссылка: https://ostrovok.ru/hotel/.../?dates=05.10.2026-19.10.2026&guests=2&meal_types=...
-```
-
-## Как взять region_id для нового отеля
-
-1. Открой страницу отеля на Островке.
-2. В HTML найди `regionId":(\d+)` — первое вхождение с повтором ×3 это и есть регион (проверено: `481`, `6054866`, `6054878`).
-3. Слаг `hotel` — последний сегмент URL (`.../midXXXX/slug/` → `slug`).
-4. Добавь объект в `hotels.json`: `{name, hotel, region_id, path}` где `path` — часть после `/hotel/`.
+- `rates=null` — нет сквозной доступности. С `--split` сразу видишь половины (напр. 05–08 пусто, 08–11 AI 22 556 ₽).
+- `ИТОГ: N отелей, в фильтр прошло M` — сводка в конце всегда.
+- `Alfa -10%: ~X` — эффективная цена с кэшбэком.
+- `Ссылка Островок` — с датами/гостями/meal_types. `Alfa Travel` — тот же отель/даты искать на `travel.alfabank.ru`.
 
 ## Оплата российской картой
 
-- Выбирай тариф с пометкой `Оплата сейчас в рублях`.
-- Карты Мир / Visa / MC российских банков + СБП проходят при `payment type: now`.
-- Не бери `оплата в отеле` — там TRY наличные/карта, Мир не примут.
-- В комментарий к брони добавь: `late arrival 01:00 06.10, room needed from 05.10`.
-- Checkout обычно 12:00 — late checkout 19.10 уточняй у отеля отдельно.
+- Бери `Оплата сейчас в рублях` (`payment type: now`).
+- Мир / Visa / MC РФ + СБП проходят.
+- Не бери `оплата в отеле` — там TRY, Мир не примут.
+- В коммент к брони: `late arrival 01:00 06.10, room needed from 05.10`.
+- Checkout обычно 12:00.
