@@ -1,0 +1,218 @@
+[
+  {
+    "name": "Lara Dinc Hotel 3* AI, Лара",
+    "hotel": "dinc_hotel",
+    "region_id": 481,
+    "path": "turkey/antalya/mid7693135/dinc_hotel/"
+  },
+  {
+    "name": "Wyndham Garden Lara ex. Lara Family Club, Кунду",
+    "hotel": "wyndham_garden_lara_2",
+    "region_id": 6054866,
+    "path": "turkey/kundu/mid11262777/wyndham_garden_lara_2/"
+  },
+  {
+    "name": "La Brisa Hotel 3*, Коньяалты",
+    "hotel": "la_brisa_hotel",
+    "region_id": 481,
+    "path": "turkey/antalya/mid13873471/la_brisa_hotel/"
+  },
+  {
+    "name": "Pearly Hotel 3* HB, Коньяалты",
+    "hotel": "pearly_hotel",
+    "region_id": 481,
+    "path": "turkey/antalya/mid10017778/pearly_hotel/"
+  },
+  {
+    "name": "Corendon Grand Park Lara 4* AI",
+    "hotel": "grand_park_lara",
+    "region_id": 6054878,
+    "path": "turkey/antalya_lara_neighborhood/mid7707358/grand_park_lara/"
+  },
+  {
+    "name": "Club Hotel Sera 5*",
+    "hotel": "club_hotel_sera_2",
+    "region_id": 481,
+    "path": "turkey/antalya/mid7396231/club_hotel_sera_2/"
+  },
+  {
+    "name": "Sealife Family Resort 5*, Коньяалты",
+    "hotel": "sealife_family_resort_hotel_2",
+    "region_id": 481,
+    "path": "turkey/antalya/mid7573481/sealife_family_resort_hotel_2/"
+  },
+  {
+    "name": "Porto Bello Resort & Spa 5*, Коньяалты",
+    "hotel": "porto_bello_hotel_resort__spa",
+    "region_id": 481,
+    "path": "turkey/antalya/mid7569075/porto_bello_hotel_resort__spa/"
+  },
+  {
+    "name": "Ramada Plaza Antalya 5*",
+    "hotel": "ramada_plaza_antalya",
+    "region_id": 481,
+    "path": "turkey/antalya/mid7463764/ramada_plaza_antalya/"
+  },
+  {
+    "name": "Falcon Hotel 4*",
+    "hotel": "club_hotel_falcon",
+    "region_id": 481,
+    "path": "turkey/antalya/mid7851657/club_hotel_falcon/"
+  },
+  {
+    "name": "Adonis Hotel 4*",
+    "hotel": "adonis_hotel_13",
+    "region_id": 481,
+    "path": "turkey/antalya/mid8574518/adonis_hotel_13/"
+  },
+  {
+    "name": "Esperanza Boutique 3*, Лара",
+    "hotel": "esperanza_boutique_hotel",
+    "region_id": 481,
+    "path": "turkey/antalya/mid8453964/esperanza_boutique_hotel/"
+  },
+  {
+    "name": "Side Sedef Hotel 3*, Сиде",
+    "hotel": "side_sedef_hotel",
+    "region_id": 4931,
+    "path": "turkey/side/mid8068080/side_sedef_hotel/"
+  },
+  {
+    "name": "Side Square Hotel 3*, Сиде",
+    "hotel": "side_square_hotel",
+    "region_id": 4931,
+    "path": "turkey/side/mid9770618/side_square_hotel/"
+  },
+  {
+    "name": "Sun Kiss Otel 3*, Сиде",
+    "hotel": "sun_kiss_otel",
+    "region_id": 4931,
+    "path": "turkey/side/mid9010984/sun_kiss_otel/"
+  },
+  {
+    "name": "Kale Beach Hotel 3*, Сиде",
+    "hotel": "kale_beach_hotel",
+    "region_id": 4931,
+    "path": "turkey/side/mid8089654/kale_beach_hotel/"
+  },
+  {
+    "name": "Side Best Hotel 3*, Сиде",
+    "hotel": "side_best_hotel_3",
+    "region_id": 4931,
+    "path": "turkey/side/mid11255701/side_best_hotel_3/"
+  },
+  {
+    "name": "Selenium Hotel 4*, Сиде",
+    "hotel": "selenium_hotel",
+    "region_id": 4931,
+    "path": "turkey/side/mid7763866/selenium_hotel/"
+  },
+  {
+    "name": "Grand Hotel Art Side 4*, Сиде",
+    "hotel": "grand_hotel_art_side",
+    "region_id": 4931,
+    "path": "turkey/side/mid7796988/grand_hotel_art_side/"
+  },
+  {
+    "name": "Ozkaymak Marina Hotel 3*, Кемер",
+    "hotel": "ozkaymak_marina_hotel_3",
+    "region_id": 8281,
+    "path": "turkey/kemer/mid7354304/ozkaymak_marina_hotel_3/"
+  },
+  {
+    "name": "Park Marina Hotel 3*, Кемер",
+    "hotel": "park_marina_hotel_3",
+    "region_id": 8281,
+    "path": "turkey/kemer/mid8998154/park_marina_hotel_3/"
+  },
+  {
+    "name": "Kaliptus Hotel 3*, Кемер",
+    "hotel": "kaliptus_hotel",
+    "region_id": 8281,
+    "path": "turkey/kemer/mid7686689/kaliptus_hotel/"
+  },
+  {
+    "name": "Britannia Hotel 4*, Кемер",
+    "hotel": "britannia_hotel_4",
+    "region_id": 8281,
+    "path": "turkey/kemer/mid8574631/britannia_hotel_4/"
+  },
+  {
+    "name": "Amsterdam Hotel 4*, Кемер",
+    "hotel": "amsterdam_hotel_4",
+    "region_id": 8281,
+    "path": "turkey/kemer/mid7752394/amsterdam_hotel_4/"
+  },
+  {
+    "name": "Lancora Beach Hotel 4*, Кемер",
+    "hotel": "lancora_beach_hotel",
+    "region_id": 8281,
+    "path": "turkey/kemer/mid7469511/lancora_beach_hotel/"
+  },
+  {
+    "name": "Fame Hotel 3*, Кемер",
+    "hotel": "fame_hotel",
+    "region_id": 8281,
+    "path": "turkey/kemer/mid8574571/fame_hotel/"
+  },
+  {
+    "name": "Grand Beauty Hotel 4*, Кемер",
+    "hotel": "grand_beauty_hotel",
+    "region_id": 8281,
+    "path": "turkey/kemer/mid8066349/grand_beauty_hotel/"
+  },
+  {
+    "name": "Art Poseidon Side 4* (ex Side Win), Эвренсеки",
+    "hotel": "side_win_otel_spa_all_inclusive",
+    "region_id": 4218,
+    "path": "turkey/side/mid10216682/side_win_otel_spa_all_inclusive/"
+  },
+  {
+    "name": "Side Crown Palace 3*, Чолаклы",
+    "hotel": "side_crown_palace_3",
+    "region_id": 4931,
+    "path": "turkey/side_colakli_neighborhood/mid6669564/side_crown_palace_3/"
+  },
+  {
+    "name": "Fulya Hotel 3*, Чолаклы",
+    "hotel": "fulya_hotel",
+    "region_id": 4931,
+    "path": "turkey/side_colakli_neighborhood/mid8618099/fulya_hotel/"
+  },
+  {
+    "name": "Sural Saray 4*, Чолаклы",
+    "hotel": "sural_saray_hotel_4",
+    "region_id": 4931,
+    "path": "turkey/side_colakli_neighborhood/mid7808440/sural_saray_hotel_4/"
+  },
+  {
+    "name": "Palm World Side Resort & Spa 4*, Чолаклы",
+    "hotel": "palm_world_side_resort__spa",
+    "region_id": 4931,
+    "path": "turkey/side_colakli_neighborhood/mid6352717/palm_world_side_resort__spa/"
+  },
+  {
+    "name": "Sunthalia Hotels & Resorts 5*, Сиде",
+    "hotel": "sunthalia_hotels_resorts",
+    "region_id": 4931,
+    "path": "turkey/side_colakli_neighborhood/mid10092173/sunthalia_hotels_resorts/"
+  },
+  {
+    "name": "Miramare Beach 4*, Чолаклы",
+    "hotel": "miramare_beach",
+    "region_id": 4931,
+    "path": "turkey/side_colakli_neighborhood/mid6619171/miramare_beach/"
+  },
+  {
+    "name": "Monachus Hotel & Spa 4*, Чолаклы",
+    "hotel": "monachus_hotel_spa_2",
+    "region_id": 4931,
+    "path": "turkey/side_colakli_neighborhood/mid7400179/monachus_hotel_spa_2/"
+  },
+  {
+    "name": "Trendy Verbena Beach 5*, Чолаклы",
+    "hotel": "trendy_verbena_beach_hotel",
+    "region_id": 4931,
+    "path": "turkey/side_colakli_neighborhood/mid6325332/trendy_verbena_beach_hotel/"
+  }
+]
