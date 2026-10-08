@@ -33,6 +33,20 @@ AREAS = (
     "kundu",
 )
 
+LISTINGS = {
+    "сиде": "turkey/side/",
+    "side": "turkey/side/",
+    "кемер": "turkey/kemer/",
+    "kemer": "turkey/kemer/",
+    "анталия": "turkey/antalya/",
+    "antalya": "turkey/antalya/",
+    "лара": "turkey/antalya/",
+    "lara": "turkey/antalya/",
+    "кунду": "turkey/kundu/",
+    "kundu": "turkey/kundu/",
+    "чолаклы": "turkey/side_colakli_neighborhood/",
+}
+
 
 class ChatIn(BaseModel):
     message: str
@@ -89,12 +103,24 @@ def _discover_reply(area: str) -> str:
             return "The hotel listing is unavailable right now. Try again later."
     hotels = (data if isinstance(data, dict) else {}).get("hotels", [])
     if not hotels:
+        hotels = _browser_fallback(area)
+    if not hotels:
         return f"No hotels found for '{area}' right now. Try another area or dates."
-    lines = [f"Top options in {data.get('area', area)}:"]
+    lines = [f"Top options in {data.get('area', area) if isinstance(data, dict) else area}:"]
     for h in hotels[:5]:
         lines.append(f"- {h.get('name', h.get('hotel'))}")
     lines.append("Send dates (e.g. 2026-10-05 to 2026-10-11) to get live prices.")
     return "\n".join(lines)
+
+
+def _browser_fallback(area: str) -> list:
+    """JS-rendered listing lookup when the plain fetch finds nothing."""
+    from .browser import discover_via_browser
+
+    listing = LISTINGS.get(area.lower())
+    if not listing:
+        return []
+    return discover_via_browser(f"https://ostrovok.ru/hotel/{listing}")
 
 
 def _extract_dates(text: str) -> tuple[str, str] | None:

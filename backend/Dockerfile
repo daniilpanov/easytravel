@@ -3,7 +3,8 @@ FROM python:3.12-slim
 WORKDIR /srv/app
 
 COPY backend/requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+  && playwright install --with-deps chromium
 
 COPY backend ./backend
 COPY ostrovok_search.py reviews_search.py hotels.json ./
