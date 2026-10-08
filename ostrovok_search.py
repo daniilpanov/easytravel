@@ -63,6 +63,7 @@ KNOWN_REGIONS = {
     8281: "Кемер",
     4931: "Сиде",
     4218: "Сиде/Кумкой (Turquoise)",
+    1639: "Стамбул",
 }
 
 # Человекопонятное имя района -> listing на Островке + дефолтный region
@@ -83,6 +84,14 @@ AREA_INDEX = {
     "evrenseki": {"listing": "turkey/side_colakli_neighborhood/", "region": 4931, "label": "Эвренсеки"},
     "коньяалты": {"listing": "turkey/antalya/", "region": 481, "label": "Коньяалты"},
     "коньяалти": {"listing": "turkey/antalya/", "region": 481, "label": "Коньяалты"},
+    "стамбул": {"listing": "turkey/istanbul/", "region": 1639, "label": "Стамбул"},
+    "istanbul": {"listing": "turkey/istanbul/", "region": 1639, "label": "Стамбул"},
+    "султанахмет": {"listing": "turkey/istanbul/", "region": 1639, "label": "Стамбул (Султанахмет)"},
+    "sultanahmet": {"listing": "turkey/istanbul/", "region": 1639, "label": "Стамбул (Султанахмет)"},
+    "таксим": {"listing": "turkey/istanbul/", "region": 1639, "label": "Стамбул (Таксим)"},
+    "taksim": {"listing": "turkey/istanbul/", "region": 1639, "label": "Стамбул (Таксим)"},
+    "фатих": {"listing": "turkey/istanbul/", "region": 1639, "label": "Стамбул (Фатих)"},
+    "бейоглу": {"listing": "turkey/istanbul/", "region": 1639, "label": "Стамбул (Бейоглу)"},
 }
 
 
@@ -274,6 +283,8 @@ def nearby_hotels(hotel_path_or_url: str, limit: int = 8, timeout: int = 30) -> 
         area = "сиде"
     elif "kundu" in low:
         area = "кунду"
+    elif "istanbul" in low:
+        area = "стамбул"
     else:
         area = "анталия"
     res = discover_area(area, limit=limit + 5, timeout=timeout)
@@ -615,6 +626,8 @@ def main() -> int:
                 rid = 6054866
             elif "colakli" in path or "/side" in path:
                 rid = 4931
+            elif "istanbul" in path:
+                rid = 1639
             else:
                 rid = 481
             print(f"region не задан — беру по эвристике path -> {rid} (проверь через --resolve)")
