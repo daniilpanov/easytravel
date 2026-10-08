@@ -1,0 +1,25 @@
+# Allowed data sources for the travel agent (MVP-0.4).
+# The agent may collect data ONLY from these domains.
+# Everything else is blocked by backend/app/policy.py.
+allowed_domains:
+  # tariffs / booking
+  - ostrovok.ru
+  - travel.alfabank.ru
+  # reviews / descriptions
+  - tophotels.ru
+  - tripadvisor.ru
+  - tripadvisor.com
+  - travel.yandex.ru
+  - otzyv.ru
+  - 1001tur.ru
+  - level.travel
+  - coral.ru
+  - biblioglobus.ru
+  - onlinetours.ru
+  # search engine (as search only, not content)
+  - html.duckduckgo.com
+  - lite.duckduckgo.com
+  # geo / routing
+  - nominatim.openstreetmap.org
+  - router.project-osrm.org
+  - openstreetmap.org
