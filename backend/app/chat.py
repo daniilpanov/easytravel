@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
+import tempfile
 
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -95,9 +97,116 @@ def _discover_reply(area: str) -> str:
     return "\n".join(lines)
 
 
+def _extract_dates(text: str) -> tuple[str, str] | None:
+    found = re.findall(r"\d{4}-\d{2}-\d{2}", text)
+    if len(found) >= 2:
+        return found[0], found[1]
+    return None
+
+
+def _prices_reply(area: str, arrival: str, departure: str) -> str:
+    """Run the tariff search (ostrovok.ru, allowlisted) and summarize live prices."""
+    with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tmp:
+        json_out = tmp.name
+    try:
+        proc = subprocess.run(
+            [
+                "python3",
+                "ostrovok_search.py",
+                "--arrival",
+                arrival,
+                "--departure",
+                departure,
+                "--area",
+                area,
+                "--limit",
+                "5",
+                "--top",
+                "2",
+                "--json-out",
+                json_out,
+            ],
+            cwd=os.path.abspath(ROOT),
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return f"Could not check live prices right now ({exc}). Try again later."
+    if proc.returncode != 0:
+        return "Live prices are unavailable for these dates. Try nearby dates."
+    try:
+        with open(json_out, encoding="utf-8") as f:
+            results = json.load(f)
+    except (OSError, ValueError):
+        return "Live prices are unavailable for these dates. Try nearby dates."
+    finally:
+        try:
+            os.unlink(json_out)
+        except OSError:
+            pass
+    options = []
+    for entry in results:
+        for offer in (entry.get("filtered") or [])[:2]:
+            options.append(
+                (
+                    offer.get("total") or 0,
+                    entry["hotel"].get("name", ""),
+                    ",".join(offer.get("meal") or []),
+                )
+            )
+    if not options:
+        return (
+            f"No matching tariffs for {area} {arrival} to {departure}. "
+            "Try nearby dates or another area."
+        )
+    options.sort(key=lambda o: o[0])
+    lines = [f"Live prices in {area} ({arrival} to {departure}):"]
+    for total, name, meal in options[:5]:
+        lines.append(f"- {name}: {meal} — {total:.0f} RUB")
+    lines.append("Prices come straight from the booking provider, not estimates.")
+    return "\n".join(lines)
+
+
+def _reviews_reply(name: str) -> str:
+    """Run the multi-source review aggregator (allowlisted) for one hotel."""
+    try:
+        proc = subprocess.run(
+            [
+                "python3",
+                "reviews_search.py",
+                "--hotel",
+                name,
+                "--limit-sources",
+                "4",
+                "--top-reviews",
+                "2",
+            ],
+            cwd=os.path.abspath(ROOT),
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return f"Could not fetch reviews right now ({exc}). Try again later."
+    out = (proc.stdout or "").strip()
+    if not out:
+        return f"No reviews found for '{name}'. Check the hotel name spelling."
+    return out[:2000]
+
+
 def _assistant_reply(text: str) -> str:
+    low = text.lower()
+    if low.startswith("reviews ") or low.startswith("review "):
+        name = text.split(" ", 1)[1].strip()
+        if name:
+            return _reviews_reply(name)
+        return "Write the hotel name after 'reviews', e.g. 'reviews Art Poseidon Side'."
     area = _detect_area(text)
     if area:
+        dates = _extract_dates(text)
+        if dates:
+            return _prices_reply(area, dates[0], dates[1])
         return _discover_reply(area)
     return (
         "Tell me the destination and dates, e.g. 'Side 2026-10-05 to 2026-10-11, "
