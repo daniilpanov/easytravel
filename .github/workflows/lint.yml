@@ -1,0 +1,30 @@
+name: lint
+
+on: [push, pull_request]
+
+jobs:
+  lint-be:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff black pytest httpx fastapi sqlalchemy pyyaml
+      - run: ruff check backend tests
+      - run: black --check backend tests
+      - run: python -m pytest -q -m "not e2e"
+
+  lint-fe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run lint
+        working-directory: frontend
+      - run: npm run format
+        working-directory: frontend
