@@ -9,6 +9,10 @@ from .policy import allowed_domains
 
 app = FastAPI(title="EasyTravel API")
 
+from .chat import router as chat_router  # noqa: E402
+
+app.include_router(chat_router)
+
 
 @app.on_event("startup")
 def _create_tables() -> None:
